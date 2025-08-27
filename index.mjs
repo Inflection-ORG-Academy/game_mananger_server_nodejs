@@ -3,11 +3,10 @@ dotenv.config({ path: './example.env' })
 
 import express from 'express'
 import { errorHandler } from './error.mjs'
+import userRouter from './users/router.mjs'
 const app = express()
 
-app.get('/', (req, res) => {
-  throw Error('apple')
-})
+app.use('/users', userRouter)
 
 app.all(/^.*$/, (req, res) => {
   res.status(400).json({ msg: 'route dosen\'t exists' })
