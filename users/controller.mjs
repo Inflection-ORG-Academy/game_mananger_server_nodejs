@@ -20,9 +20,14 @@ const signup = async (req, res, next) => {
       password: hasedPassword
     },
   });
-  console.log(newUser)
 
-  // TODO: create verification link
+  // 1. Add 2 columns in User table in DB. 
+  // 1.1 Add resetToken(string), resetTokenExpiry(timestampz) in User prisma model
+  // 1.2 Run migration to acctually add column
+  // 2. generate a 32 keyword random string
+  // 3. update this string in DB with future 15min expiry time
+  // 4. make link example https://localhost:5000/resetPassword/fgvjkdsuhvgyahfvajdsfahvdsjvbd
+  // 5. add this above link email replacing http://google.com
 
   await emailQueue.add("welcome_email", {
     to: newUser.email,
@@ -48,9 +53,8 @@ const login = async (req, res, next) => {
     },
   })
 
-  console.log(user)
-
   // TODO: check is account verified
+
   if (!await bcrypt.compare(req.body.password, user.password)) {
     throw new ServerError(401, "password mismatch")
   }
@@ -64,10 +68,23 @@ const login = async (req, res, next) => {
 }
 
 const forgotPassword = (req, res, next) => {
+  // 1. find User via email from req.body
+  // 1. generate a 32 keyword random string
+  // 3. update this string in DB with future 15min expiry time
+  // 4. make link example https://localhost:5000/resetPassword/fgvjkdsuhvgyahfvajdsfahvdsjvbd
+  // 5. send this link via email
   res.json({ msg: "forgot password" })
 }
+
 const resetPassword = (req, res, next) => {
-  res.json({ msg: "reset password" })
+  // 1. Extract token from req.body
+  // 2. find User via token from DB
+  // 3. check for token expiry
+  // 4. check if is accountVerified
+  // 5. if account verified extract password from req.body
+  // 6. hash password
+  // 7. update user password in DB
+  res.json({ msg: "reset password successul" })
 }
 
 export { signup, login, forgotPassword, resetPassword }
