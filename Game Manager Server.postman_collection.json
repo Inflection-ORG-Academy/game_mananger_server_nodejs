@@ -16,7 +16,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"email\": \"b@b.com\",\r\n  \"name\": \"Banana\",\r\n  \"password\": \"1234Aa#\"\r\n}",
+							"raw": "{\r\n  \"email\": \"c@c.com\",\r\n  \"name\": \"Apple\",\r\n  \"password\": \"Apple123#\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -38,12 +38,24 @@
 				},
 				{
 					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.environment.set(\"TOKEN\", pm.response.json().token)"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"email\": \"w@v.com\",\r\n  \"password\": \"1234Aa#\"\r\n}",
+							"raw": "{\r\n  \"email\": \"b@b.com\",\r\n  \"password\": \"Apple123#\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -138,7 +150,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"name\": \"sanke\",\r\n    \"maxPlayer\": 5,\r\n    \"minPlayer\": 2\r\n}",
+							"raw": "{\r\n    \"name\": \"ludo\",\r\n    \"maxPlayer\": 4,\r\n    \"minPlayer\": 2\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -146,12 +158,12 @@
 							}
 						},
 						"url": {
-							"raw": "{{URL}}/game",
+							"raw": "{{URL}}/games",
 							"host": [
 								"{{URL}}"
 							],
 							"path": [
-								"game"
+								"games"
 							]
 						}
 					},
@@ -160,6 +172,16 @@
 				{
 					"name": "List Games",
 					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
@@ -194,12 +216,12 @@
 							}
 						},
 						"url": {
-							"raw": "{{URL}}/session",
+							"raw": "{{URL}}/sessions",
 							"host": [
 								"{{URL}}"
 							],
 							"path": [
-								"session"
+								"sessions"
 							]
 						}
 					},
@@ -212,7 +234,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"sessionID\":1,\r\n    \"playerID\": 1\r\n}"
+							"raw": "{\r\n    \"sessionID\":1\r\n}"
 						},
 						"url": {
 							"raw": "{{URL}}/sessions/player",
