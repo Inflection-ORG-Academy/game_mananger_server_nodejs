@@ -4,37 +4,45 @@ import prisma from "../prisma/db.mjs"
 import { errorPritify, UserSignupModel, UserLoginModel } from "./validator.mjs"
 import emailQueue from "../queue/email.queue.mjs"
 import { asyncJwtSign } from "../async.jwt.mjs"
+import { generateSecureRandomString } from "../utils.mjs"
+import dayjs from "dayjs"
 
 const signup = async (req, res, next) => {
+  // validate input data
   const result = await UserSignupModel.safeParseAsync(req.body)
   if (!result.success) {
     throw new ServerError(400, errorPritify(result))
   }
 
+  // hash password
   const hasedPassword = await bcrypt.hash(req.body.password, 10)
 
+  // 2. generate a 32 keyword random string
+  const randomStr = generateSecureRandomString(32)
+
+  // 3. update this string in DB with future 15min expiry time
+  const futureExpiryTime = dayjs().add(15, 'minute');
+
+  // add user to DB
   const newUser = await prisma.user.create({
     data: {
       email: req.body.email,
       name: req.body.name,
-      password: hasedPassword
+      password: hasedPassword,
+      resetToken: randomStr,
+      tokenExpiry: futureExpiryTime
     },
   });
 
-  // 1. Add 2 columns in User table in DB. 
-  // 1.1 Add resetToken(string), resetTokenExpiry(timestampz) in User prisma model
-  // 1.2 Run migration to acctually add column
-  // 2. generate a 32 keyword random string
-  // 3. update this string in DB with future 15min expiry time
   // 4. make link example https://localhost:5000/resetPassword/fgvjkdsuhvgyahfvajdsfahvdsjvbd
-  // 5. add this above link email replacing http://google.com
+  const link = `${req.protocol}://${process.env.FRONTEND_URL}/${randomStr}`
 
   await emailQueue.add("welcome_email", {
     to: newUser.email,
     subject: "Verfication Email",
     body: `<html>
       <h1>Welcome ${newUser.name}</h1>
-      <a href="http://google.com">Click Here to verify account</a>
+      <a href=${link}>Click Here to verify account</a>
     </html>`
   })
 
