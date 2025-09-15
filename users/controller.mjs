@@ -102,13 +102,41 @@ const login = async (req, res, next) => {
   res.json({ msg: "login successful", token })
 }
 
-const forgotPassword = (req, res, next) => {
-  // 1. find User via email from req.body
-  // 1. generate a 32 keyword random string
+const forgotPassword = async (req, res, next) => {
+  // 2. generate a 32 keyword random string
+  const randomStr = generateSecureRandomString(32)
+
   // 3. update this string in DB with future 15min expiry time
+  const futureExpiryTime = dayjs().add(15, 'minute');
+
+  const userArr = await prisma.user.updateManyAndReturn({
+    where: {
+      email: req.body.email
+    },
+    data: {
+      resetToken: randomStr,
+      tokenExpiry: futureExpiryTime
+    },
+  });
+
+  if (userArr.length === 0) {
+    throw new ServerError(404, "User not found, please signup first")
+  }
+
+  const user = userArr[0]
+
   // 4. make link example https://localhost:5000/resetPassword/fgvjkdsuhvgyahfvajdsfahvdsjvbd
-  // 5. send this link via email
-  res.json({ msg: "forgot password" })
+  const link = `${req.protocol}://${process.env.FRONTEND_URL}/${randomStr}`
+
+  await emailQueue.add("forgot_pass", {
+    to: user.email,
+    subject: "Forgot Password",
+    body: `<html>
+      <h1>Hi, ${user.name}</h1>
+      <a href=${link}>Click Here to reset password</a>
+    </html>`
+  })
+  res.json({ msg: "Email sent" })
 }
 
 const resetPassword = async (req, res, next) => {
@@ -130,6 +158,9 @@ const resetPassword = async (req, res, next) => {
     throw new ServerError(401, "Link expired")
   }
   if (user.accountVerified && !req.body.password) {
+    if (req.body.password.length < 6) {
+      throw new ServerError(401, "password should not be less than 6")
+    }
     throw new ServerError(401, "password must be supplied")
   }
 
