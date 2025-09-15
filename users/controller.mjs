@@ -1,6 +1,6 @@
 import { ServerError } from "../error.mjs"
 import bcrypt from "bcrypt"
-import prisma from "../prisma/db.mjs"
+import { prisma, Prisma, DB_ERR_CODES } from "../prisma/db.mjs"
 import { errorPritify, UserSignupModel, UserLoginModel } from "./validator.mjs"
 import emailQueue from "../queue/email.queue.mjs"
 import { asyncJwtSign } from "../async.jwt.mjs"
@@ -24,27 +24,47 @@ const signup = async (req, res, next) => {
   const futureExpiryTime = dayjs().add(15, 'minute');
 
   // add user to DB
-  const newUser = await prisma.user.create({
-    data: {
-      email: req.body.email,
-      name: req.body.name,
-      password: hasedPassword,
-      resetToken: randomStr,
-      tokenExpiry: futureExpiryTime
-    },
-  });
+  try {
+    const newUser = await prisma.user.create({
+      data: {
+        email: req.body.email,
+        name: req.body.name,
+        password: hasedPassword,
+        resetToken: randomStr,
+        tokenExpiry: futureExpiryTime
+      },
+    });
 
-  // 4. make link example https://localhost:5000/resetPassword/fgvjkdsuhvgyahfvajdsfahvdsjvbd
-  const link = `${req.protocol}://${process.env.FRONTEND_URL}/${randomStr}`
+    // 4. make link example https://localhost:5000/resetPassword/fgvjkdsuhvgyahfvajdsfahvdsjvbd
+    const link = `${req.protocol}://${process.env.FRONTEND_URL}/${randomStr}`
 
-  await emailQueue.add("welcome_email", {
-    to: newUser.email,
-    subject: "Verfication Email",
-    body: `<html>
+    await emailQueue.add("welcome_email", {
+      to: newUser.email,
+      subject: "Verfication Email",
+      body: `<html>
       <h1>Welcome ${newUser.name}</h1>
       <a href=${link}>Click Here to verify account</a>
     </html>`
-  })
+    })
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      if (err.code === DB_ERR_CODES.UNIQUE_ERR) {
+        throw new ServerError(401, 'User with this email already exists.');
+      }
+    }
+    throw err;
+  }
+
+  // IN FUTURE Implement something like this
+  // const user = await catchDBError(await prisma.user.create({
+  //   data: {
+  //     email: req.body.email,
+  //     name: req.body.name,
+  //     password: hasedPassword,
+  //     resetToken: randomStr,
+  //     tokenExpiry: futureExpiryTime
+  //   },
+  // }))
 
   res.json({ msg: "signup is successful" })
 }
