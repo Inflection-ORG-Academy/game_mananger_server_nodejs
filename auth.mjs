@@ -8,7 +8,6 @@ const authentication = async (req, res, next) => {
     throw new ServerError(401, "token not supplied")
   }
 
-
   const [bearer, token] = req.headers.authorization.split(" ")
   if (!bearer || !token) {
     throw new ServerError(401, "Bearer token not supplied")
@@ -23,7 +22,6 @@ const authentication = async (req, res, next) => {
   } catch (err) {
     throw new ServerError(401, err.message)
   }
-
 
   next()
 }
