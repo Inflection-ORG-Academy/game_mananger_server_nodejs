@@ -15,9 +15,8 @@ const fileFilter = (req, file, callback) => {
 
 const uploadConfig = {
   storage,
-  dest: './uploads/',
   limits: {
-    fileSize: 5 * 1024 * 1024,
+    fileSize: 0.5 * 1024 * 1024,
     files: 1
   },
   fileFilter
@@ -25,41 +24,25 @@ const uploadConfig = {
 
 const upload = multer(uploadConfig);
 
-const singleImageUploadMiddleware = (fieldName = 'image') => {
+// const singleImageUploadMiddleware = (fieldName) => {
+//   return async (req,res,next)=>{
+//     const multerMiddlewareFunction = upload.single(fieldName)
+//     multerMiddlewareFunction(req,res,next)
+//   }
+// };
+const singleImageUploadMiddleware = (fieldName) => {
   return async (req, res, next) => {
-    const singleUpload = upload.single(fieldName);
-
-    singleUpload(req, res, (error) => {
-      if (error) {
-        // Handle different types of multer errors
-        if (error instanceof multer.MulterError) {
-          switch (error.code) {
-            case 'LIMIT_FILE_SIZE':
-              return next(new ServerError(400, `File size must be less than ${uploadConfig.limits.fileSize / 1024}KB`))
-
-            case 'LIMIT_FILE_COUNT':
-              return next(new ServerError(400, `Only one file is allowed`));
-
-            case 'LIMIT_UNEXPECTED_FILE':
-              return next(new ServerError(400, `Expected field name: ${fieldName}`))
-
-            default:
-              console.log(error)
-              return next(new ServerError(400, error.message))
-          }
-        }
-        // Handle other errors
-        return next(new ServerError(400, error.message));
+    const multerMiddlewareFunction = upload.single(fieldName)
+    multerMiddlewareFunction(req, null, (err) => {
+      if (err) {
+        return next(new ServerError(400, err.message))
       }
-
-      // Check if file was uploaded
       if (!req.file) {
-        return next(new ServerError(400, 'Please select a file to upload'))
+        return next(new ServerError(404, "File must be supplied!!!"))
       }
-
-      next();
-    });
-  };
+      next()
+    })
+  }
 };
 
 export { singleImageUploadMiddleware }
