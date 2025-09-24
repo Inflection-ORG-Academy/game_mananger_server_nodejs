@@ -28,4 +28,8 @@ const uploadImage = async (buffer, fileName, folderName, isPublic) => {
   }
 }
 
-export { uploadImage }
+const deleteImage = async () => {
+  // TODO: implement delete image (homework)
+}
+
+export { uploadImage, deleteImage }
