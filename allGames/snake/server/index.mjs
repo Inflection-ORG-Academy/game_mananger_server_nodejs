@@ -104,6 +104,7 @@ io.on('connection', (socket) => {
 app.get("/apple", (req, res, next) => {
   res.json({ msg: "hello apple" })
 })
+app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
