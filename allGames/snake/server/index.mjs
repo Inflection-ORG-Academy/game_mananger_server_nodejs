@@ -80,7 +80,7 @@ io.on('connection', (socket) => {
       turn = socket.id
     }
     socket.emit('info', 'hello from server')
-    clients.push({ name, socketId: socket.id, position: 98 })
+    clients.push({ name, socketId: socket.id, position: 1 })
     io.emit('game', { clients, turn })
     console.log(clients)
   })
