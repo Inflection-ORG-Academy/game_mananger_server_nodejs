@@ -1,5 +1,6 @@
 import { DB_ERR_CODES, prisma, Prisma } from "../prisma/db.mjs"
 import { ServerError } from "../error.mjs"
+import { spawn } from "child_process"
 
 const addGame = async (req, res, next) => {
   // TODO: add validation
@@ -77,7 +78,12 @@ const requestGame = async (req, res, next) => {
   }
 
   // start game
-  console.log("start game")
+  const gameInstance = spawn('node', ['D:/class/Backend/Game Server/game_server/allGames/snake/server/index.mjs'], {
+    detached: true,
+    stdio: 'ignore',
+  });
+  gameInstance.unref();
+  console.log(gameInstance)
 
   res.json({
     msg: "successful",
