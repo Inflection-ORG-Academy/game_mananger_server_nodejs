@@ -82,10 +82,20 @@ const requestGame = async (req, res, next) => {
     })
   }
 
-  game.name
+  const { pid, port } = await startGame(game)
+  const gameURL = `${req.protocol}://${req.get('host')}:${port}`
 
-  console.log("game start")
-  const pid = await startGame(game)
+  await prisma.gameSession.updateMany({
+    where: {
+      id: gameSession.id
+    },
+    data: {
+      GameUrl: gameURL,
+      ProcessID: pid,
+      status: 'PLAYING',
+      StartedAt: new Date(),
+    }
+  })
 
   res.json({
     msg: "successful",
@@ -93,23 +103,26 @@ const requestGame = async (req, res, next) => {
     gameSession,
     gameSessionPlayer,
     data,
-    pid
+    pid,
+    url: gameURL
   })
 }
 
 const startGame = async (game) => {
 
+  const port = Math.ceil(Math.random() * 62000) + 3000 // random number from 3000-65000
+
   // start game
   const gameInstance = spawn(
     'node',
-    [path.resolve(__dirname, `../allGames/${game.name}/index.mjs`), 8080],
+    [path.resolve(__dirname, `../allGames/${game.name}/index.mjs`), port],
     {
       detached: true,
       stdio: 'ignore',
     });
   gameInstance.unref();
   console.log(gameInstance)
-  return { pid: gameInstance.pid }
+  return { pid: gameInstance.pid, port }
 }
 
 export { addGame, listGame, requestGame }
