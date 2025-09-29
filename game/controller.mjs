@@ -1,6 +1,11 @@
 import { DB_ERR_CODES, prisma, Prisma } from "../prisma/db.mjs"
 import { ServerError } from "../error.mjs"
 import { spawn } from "node:child_process"
+import path from 'node:path'
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const addGame = async (req, res, next) => {
   // TODO: add validation
@@ -77,8 +82,10 @@ const requestGame = async (req, res, next) => {
     })
   }
 
+  game.name
+
   console.log("game start")
-  const pid = await startGame()
+  const pid = await startGame(game)
 
   res.json({
     msg: "successful",
@@ -90,11 +97,12 @@ const requestGame = async (req, res, next) => {
   })
 }
 
-const startGame = async () => {
+const startGame = async (game) => {
+
   // start game
   const gameInstance = spawn(
     'node',
-    ['D:/class/Backend/Game Server/game_server/allGames/snake/index.mjs', 8080],
+    [path.resolve(__dirname, `../allGames/${game.name}/index.mjs`), 8080],
     {
       detached: true,
       stdio: 'ignore',
