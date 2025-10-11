@@ -81,20 +81,25 @@ io.on('connection', (socket) => {
     if (!token) {
       return
     }
-    asyncJwtVerify(token, TOKEN_SECRET)
 
     if (turn === "") {
       turn = socket.id
     }
     let payload
     try {
-      payload = await asyncJwtVerify(token, process.env.TOKEN_SECRET)
+      payload = asyncJwtVerify(token, TOKEN_SECRET)
       console.log(payload)
       socket.emit('info', payload)
     } catch (e) {
       socket.emit('info', e.message)
     }
-    clients.push({ name: payload.name, socketId: socket.id, position: 1 })
+    clients.push({
+      name: payload.name,
+      id: payload.id,
+      profilePhoto: payload.profilePhoto,
+      socketId: socket.id,
+      position: 1
+    })
     io.emit('game', { clients, turn })
     console.log(clients)
   })
