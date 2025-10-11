@@ -6,9 +6,10 @@ import { createServer } from 'node:http'
 import { Server } from 'socket.io'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url';
-import jwt from 'jsonwebtoken'
+import { asyncJwtVerify } from './async.jwt.mjs'
 
 const PORT = process.argv[2] || 80
+const TOKEN_SECRET = process.argv[3]
 
 // Define __dirname for use with ES Modules
 const __filename = fileURLToPath(import.meta.url);
@@ -73,24 +74,15 @@ const io = new Server(httpServer, {
   }
 })
 
-const asyncJwtVerify = (token, secret) => {
-  return new Promise((resolve, reject) => {
-    jwt.verify(token, secret, (err, token) => {
-      if (err) {
-        return reject(err)
-      }
-      resolve(token)
-    })
-  })
-}
-
 io.on('connection', (socket) => {
   console.log('a user connected');
   socket.on('info', async (token) => {
-    console.log(token, process.env.TOKEN_SECRET);
+    console.log(token, TOKEN_SECRET);
     if (!token) {
       return
     }
+    asyncJwtVerify(token, TOKEN_SECRET)
+
     if (turn === "") {
       turn = socket.id
     }
