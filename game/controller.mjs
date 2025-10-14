@@ -31,6 +31,7 @@ const requestGame = async (req, res, next) => {
   if (!req.body.gameID) {
     throw new ServerError(400, "game id must be supplied")
   }
+  const tokenSecret = generateSecureRandomString(32)
   let gameSession = await prisma.gameSession.findFirst({
     where: {
       gameID: req.body.gameID,
@@ -40,7 +41,8 @@ const requestGame = async (req, res, next) => {
   if (!gameSession) {
     gameSession = await prisma.gameSession.create({
       data: {
-        gameID: req.body.gameID
+        gameID: req.body.gameID,
+        tokenSecret
       }
     })
   }
@@ -84,13 +86,10 @@ const requestGame = async (req, res, next) => {
     })
   }
 
-
-  // generate secure token
-  const tokenSecret = generateSecureRandomString(32)
   // token sent to newly started game server
   const { pid, port } = await startGame(game, tokenSecret)
-  const token = asyncJwtSign(req.user, tokenSecret,)
-  // TODO: homework put token in game url as query 
+
+  const token = await asyncJwtSign(req.user, tokenSecret)
   const gameURL = `${req.protocol}://${req.get('host')}:${port}?token=${token}`
 
   gameSession = await prisma.gameSession.updateManyAndReturn({
@@ -101,14 +100,14 @@ const requestGame = async (req, res, next) => {
       GameUrl: gameURL,
       ProcessID: pid,
       status: 'PLAYING',
-      StartedAt: new Date(),
-      tokenSecret
+      StartedAt: new Date()
     }
-  })[0]
+  })
 
   res.json({
     msg: "successful",
     gameID: req.body.gameID,
+    gameURL,
     gameSession,
     gameSessionPlayer,
   })
